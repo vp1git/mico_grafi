@@ -8,7 +8,7 @@ list(enumerate(df_raw.columns.to_list()))
 # %%
 figs = {}
 # %%
-df_hrana = pd.concat([df_raw["datum"], df_raw.iloc[:, 2:19]], axis="columns")
+df_hrana = pd.concat([df_raw["datum"], df_raw.iloc[:, 1:19]], axis="columns")
 figs["hrana"] = px.area(df_hrana, x="datum", y=df_hrana.columns[1:], title="Hrana")
 for i in figs["hrana"]["data"]:
     i["line"]["width"] = 0
