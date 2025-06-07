@@ -49,28 +49,28 @@ df["prednicortone_5mg"] = df["prednicortone_5mg"].fillna(0)
 # px.line(x=df.datum, y=df.bruhal.rolling(30).mean())
 
 # %%
-figs['pojedel_kcal'] = px.scatter(
+figs["pojedel_kcal"] = px.scatter(
     x=df.datum,
     y=df.pojedel_kcal,
     trendline="rolling",
-    trendline_options=dict(window='7d'),
-    title="Pojedel (kcal)"
+    trendline_options=dict(window="7d"),
+    title="Pojedel (kcal)",
 )
-figs['teza_g'] = px.scatter(
+figs["teza_g"] = px.scatter(
     x=df.datum,
     y=df.teza_g,
     trendline="rolling",
-    trendline_options=dict(window='7d'),
-    title="Teža (g)"
+    trendline_options=dict(window="7d"),
+    title="Teža (g)",
 )
 
 for key, fig in figs.items():
-    if key == 'hrana':
+    if key == "hrana":
         continue
     fig.update_traces(
-    marker={"size": 4, "opacity": 1},
-    line={"width": 1},
-)
+        marker={"size": 4, "opacity": 1},
+        line={"width": 1},
+    )
 
 # %%
 for fig in figs.values():
@@ -80,10 +80,13 @@ for fig in figs.values():
 from plotly.graph_objects import Figure
 from plotly.subplots import make_subplots
 from datetime import date
-fig_out = make_subplots(rows=len(figs), cols=1, shared_xaxes=True) #, subplot_titles=("Scatter", "Stacked Bar"))
+
+fig_out = make_subplots(
+    rows=len(figs), cols=1, shared_xaxes=True
+)  # , subplot_titles=("Scatter", "Stacked Bar"))
 
 # Add traces from px figures
-for i, fig in enumerate(figs.values(),start=1):
+for i, fig in enumerate(figs.values(), start=1):
     for trace in fig.data:
         fig_out.add_trace(trace, row=i, col=1)
 
