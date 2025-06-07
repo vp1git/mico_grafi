@@ -53,14 +53,14 @@ figs['pojedel_kcal'] = px.scatter(
     x=df.datum,
     y=df.pojedel_kcal,
     trendline="rolling",
-    trendline_options=dict(window=7),
+    trendline_options=dict(window='7d'),
     title="Pojedel (kcal)"
 )
 figs['teza_g'] = px.scatter(
     x=df.datum,
     y=df.teza_g,
     trendline="rolling",
-    trendline_options=dict(window=7),
+    trendline_options=dict(window='7d'),
     title="Teža (g)"
 )
 
@@ -80,7 +80,7 @@ for fig in figs.values():
 from plotly.graph_objects import Figure
 from plotly.subplots import make_subplots
 from datetime import date
-fig_out = make_subplots(rows=len(figs), cols=1) #, subplot_titles=("Scatter", "Stacked Bar"))
+fig_out = make_subplots(rows=len(figs), cols=1, shared_xaxes=True) #, subplot_titles=("Scatter", "Stacked Bar"))
 
 # Add traces from px figures
 for i, fig in enumerate(figs.values(),start=1):
@@ -89,6 +89,16 @@ for i, fig in enumerate(figs.values(),start=1):
 
 fig_out.show()
 fig_out.write_html(f"output/Mico {date.today()}.html")
+
+# %%
+#
+#
+#
+#
+#
+#
+#
+#
 # %%
 from datetime import datetime
 
