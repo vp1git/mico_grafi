@@ -1,6 +1,7 @@
 # %%
 import pandas as pd
 import plotly.express as px
+from plotly.subplots import make_subplots
 
 
 def get_google_sheet_url(file_id: str, sheet_id: int) -> str:
@@ -48,4 +49,78 @@ figs["hrana"] = px.area(
 for i in figs["hrana"]["data"]:
     i["line"]["width"] = 0
 figs["hrana"]
+# %%
+df_hrana = pd.merge(
+    dfs["log_hrana"],
+    dfs["vrste_hrana"],
+    how="left",
+    left_on="vrsta_hrane",
+    right_on="hrana",
+)
+df_hrana["pojedel_kcal"] = df_hrana.apply(
+    lambda row: row.pojedel_g * row.kcal_per_g, axis="columns"
+)
+
+figs["pojedel_kcal"] = px.scatter(
+    data_frame=df_hrana.groupby("datum", as_index=False).agg({"pojedel_kcal": sum}),
+    x="datum",
+    y="pojedel_kcal",
+    trendline="rolling",
+    trendline_options=dict(window="7d"),
+    title="Pojedel (kcal)",
+)
+
+# %%
+df_teza = dfs["log_teza"]
+
+figs["teza_g"] = px.scatter(
+    # data_frame=df_teza.groupby('datum', as_index=False).agg({'teza_g': np.mean}),
+    data_frame=df_teza,
+    x="datum",
+    y="teza_g",
+    trendline="rolling",
+    trendline_options=dict(window="7d"),
+    title="Pojedel (kcal)",
+)
+
+# %%
+for fig_key in ["pojedel_kcal", "teza_g"]:
+    figs[fig_key].update_traces(
+        marker={"size": 4, "opacity": 1},
+        line={"width": 1},
+    )
+
+# %%
+fig_out = make_subplots(
+    rows=len(figs),
+    cols=1,
+    shared_xaxes=True,
+    subplot_titles=(
+        "Hrana (g)",
+        "Pojedel (kcal)",
+        "Teža (g)",
+        "Bruhanje (na teden)",
+        "Driska (na teden)",
+        "Prednicortone (5 mg tablete)",
+    ),
+)
+
+# Add traces from px figures
+for i, fig in enumerate(figs.values(), start=1):
+    for trace in fig.data:
+        fig_out.add_trace(trace, row=i, col=1)
+# %%
+fig_out
+
+# %%
+df_drugo = dfs["log_drugo"]
+df_drugo[df_drugo.vrsta == "prednisolone (5mg tablete)"]
+figs["prednicortone_5mg"] = px.bar(
+    data_frame=df_drugo[df_drugo.vrsta == "prednisolone (5mg tablete)"],
+    x="datum",
+    y="količina",
+    title="Prednicortone (5 mg tablete)",
+)
+figs["prednicortone_5mg"]
+
 # %%
