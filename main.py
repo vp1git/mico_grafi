@@ -6,13 +6,28 @@ df_raw = pd.read_excel("./data/Mico - kalorije.ods", sheet_name="Tabela", skipro
 list(enumerate(df_raw.columns.to_list()))
 
 # %%
+df_hrana = pd.concat([df_raw["datum"], df_raw.iloc[:, 1:24]], axis="columns")
+
+# %%
+hrana_by_appearance = (
+    df_hrana.melt(id_vars="datum")
+    .groupby("variable")
+    .apply(lambda x: x.reset_index().value.first_valid_index())
+    .reset_index(name="first_appear")
+    .sort_values("first_appear")
+    .variable.to_list()
+)
+
+df_hrana = df_hrana[["datum"] + hrana_by_appearance]
+df_hrana
+# %%
 figs = {}
 # %%
-df_hrana = pd.concat([df_raw["datum"], df_raw.iloc[:, 1:19]], axis="columns")
-figs["hrana"] = px.area(df_hrana, x="datum", y=df_hrana.columns[1:], title="Hrana")
+figs["hrana"] = px.area(df_hrana, x="datum", y=df_hrana.columns[1:], title="Hrana (g)")
 for i in figs["hrana"]["data"]:
     i["line"]["width"] = 0
 figs["hrana"]
+
 
 # %%
 # df_hrana = pd.concat(
@@ -63,18 +78,29 @@ figs["teza_g"] = px.scatter(
     trendline_options=dict(window="7d"),
     title="Teža (g)",
 )
+figs["bruhal"] = px.line(
+    x=df.datum,
+    y=df.bruhal.rolling(window=7).sum(),
+    title="Bruhanje (dni na teden)",
+)
+figs["driska"] = px.line(
+    x=df.datum,
+    y=df.driska.rolling(window=7).sum(),
+    title="Driska (dni na teden)",
+)
+figs["prednicortone_5mg"] = px.bar(
+    x=df.datum, y=df.prednicortone_5mg, title="Prednicortone (5 mg tablete)"
+)
 
-for key, fig in figs.items():
-    if key == "hrana":
-        continue
+for fig in [figs["pojedel_kcal"], figs["teza_g"]]:
     fig.update_traces(
         marker={"size": 4, "opacity": 1},
         line={"width": 1},
     )
 
 # %%
-for fig in figs.values():
-    fig.show()
+# for fig in figs.values():
+#     fig.show()
 
 # %%
 from plotly.graph_objects import Figure
@@ -82,8 +108,18 @@ from plotly.subplots import make_subplots
 from datetime import date
 
 fig_out = make_subplots(
-    rows=len(figs), cols=1, shared_xaxes=True
-)  # , subplot_titles=("Scatter", "Stacked Bar"))
+    rows=len(figs),
+    cols=1,
+    shared_xaxes=True,
+    subplot_titles=(
+        "Hrana (g)",
+        "Pojedel (kcal)",
+        "Teža (g)",
+        "Bruhanje (na teden)",
+        "Driska (na teden)",
+        "Prednicortone (5 mg tablete)",
+    ),
+)
 
 # Add traces from px figures
 for i, fig in enumerate(figs.values(), start=1):
@@ -137,4 +173,18 @@ fig.update_traces(
     line={"width": 0.8},
 )
 fig.write_html("output/Mico 2025-05-28.html")
+# %%
+
+df_raw["bruhal"].unique()
+
+# %%
+df_hrana.melt(id_vars="datum").dropna().to_clipboard()
+
+# %%
+pd.DataFrame(df_raw.columns)
+# %%
+df_drugo = df_hrana = pd.concat(
+    [df_raw["datum"], df_raw.iloc[:, 30:32], df_raw.iloc[:, 34:]], axis="columns"
+)
+df_drugo.melt(id_vars="datum").dropna().to_clipboard()
 # %%

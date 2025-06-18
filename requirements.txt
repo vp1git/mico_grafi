@@ -3,3 +3,5 @@ odfpy
 plotly
 statsmodels
 nbformat
+ipykernel
+streamlit
