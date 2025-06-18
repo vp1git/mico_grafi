@@ -1,3 +1,4 @@
+odfpy
 pandas
 plotly
 streamlit
