@@ -25,11 +25,10 @@ SHEET_IDS = {
     "vrste_drugo": 1556951560,
 }
 
-
 st.set_page_config(layout="wide")
 
 
-@st.cache_data
+@st.cache_data(show_spinner="Nalaganje podatkov...")
 def get_data() -> pd.DataFrame:
     dfs = {
         # k: pd.read_csv(get_google_sheet_url(FILE_ID, sheet_id))
@@ -40,6 +39,8 @@ def get_data() -> pd.DataFrame:
 
 
 dfs = get_data()
+
+
 figs = {}
 
 
@@ -126,4 +127,8 @@ for i, fig in enumerate(figs.values(), start=1):
         fig_out.add_trace(trace, row=i, col=1)
 
 
-st.plotly_chart(fig_out, height='100vh')
+st.plotly_chart(fig_out, height="100vh")
+
+st.button("Osveži grafe", on_click=get_data.clear)
+
+st.markdown(f"[Izvorni podatki](https://docs.google.com/spreadsheets/d/{FILE_ID})")
