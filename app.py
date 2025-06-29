@@ -129,7 +129,7 @@ st.button("Osveži podatke", on_click=get_data.clear)
 
 # %%
 fig_out = make_subplots(
-    rows=len(figs),
+    rows=len(figs) - 1,
     cols=1,
     shared_xaxes=True,
     subplot_titles=selected_subplots,
