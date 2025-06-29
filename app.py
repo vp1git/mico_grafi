@@ -129,7 +129,7 @@ st.button("Osveži podatke", on_click=get_data.clear)
 
 # %%
 fig_out = make_subplots(
-    rows=len(figs) - 1,
+    rows=len(selected_subplots),
     cols=1,
     shared_xaxes=True,
     subplot_titles=selected_subplots,
@@ -141,7 +141,7 @@ for i, fig_key in enumerate(selected_subplots, start=1):
     for trace in figs[fig_key].data:
         fig_out.add_trace(trace, row=i, col=1)
 
-fig_out.update_layout(height=900, width=600)
+fig_out.update_layout(height=700, width=600)
 
 # %%
 st.plotly_chart(fig_out)
