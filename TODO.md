@@ -1,0 +1,5 @@
+- bruhanje, driska, zdravila: 
+    - reindex dates + rolling sum
+- hrana: 
+    - vir proteina
+    - loceno mehka/suha (nad in pod x-osjo)

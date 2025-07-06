@@ -1,3 +1,4 @@
+nbformat
 odfpy
 pandas
 plotly

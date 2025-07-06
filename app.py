@@ -4,6 +4,9 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 from plotly.subplots import make_subplots
+import plotly.io as pio
+
+pio.templates.default = "plotly"
 
 
 def get_google_sheet_url(file_id: str, sheet_id: int) -> str:
@@ -109,6 +112,36 @@ figs["Prednicortone (5 mg tablete)"] = px.bar(
     x="datum",
     y="količina",
 )
+
+# %%
+df_drugo_vrste_izbor = [
+    "bruhanje",
+    "driska",
+    "mehko kakanje",
+    "infuzija s.c. (mL)",
+    "mirataz (uho)",
+    "reglan (10mg tablete)",
+    "vominil (mg)",
+    "prevomax",
+    "milprazon (tablete)",
+    "farmatan (tablete)",
+    "Erycitol (B12) (mL)",
+]
+df_drugo_for_plot = df_drugo[df_drugo.vrsta.isin(df_drugo_vrste_izbor)].copy()
+df_drugo_for_plot["datum_plus_1"] = df_drugo_for_plot.datum + pd.Timedelta(days=1)
+df_drugo_for_plot["vrsta"] = pd.Categorical(
+    df_drugo_for_plot.vrsta, df_drugo_vrste_izbor
+)
+
+figs["Bruhanje, driska, zdravila"] = px.timeline(
+    data_frame=df_drugo_for_plot.sort_values("vrsta", ascending=False),
+    x_start="datum",
+    x_end="datum_plus_1",
+    y="vrsta",
+)
+
+# %%
+
 # figs["Bruhanje (dni na teden)"] = px.line(
 #     x=df.datum,
 #     y=df.bruhal.rolling(window=7).sum(),
@@ -119,7 +152,12 @@ figs["Prednicortone (5 mg tablete)"] = px.bar(
 # )
 
 # %%
-preselected_subplots = ["Pojedel (kcal)", "Teža (g)", "Prednicortone (5 mg tablete)"]
+preselected_subplots = [
+    "Pojedel (kcal)",
+    "Teža (g)",
+    "Prednicortone (5 mg tablete)",
+    "Bruhanje, driska, zdravila",
+]
 
 selected_subplots = st.multiselect(
     "Izbira grafov", figs.keys(), default=preselected_subplots
@@ -140,7 +178,10 @@ fig_out = make_subplots(
 for i, fig_key in enumerate(selected_subplots, start=1):
     for trace in figs[fig_key].data:
         fig_out.add_trace(trace, row=i, col=1)
+        if fig_key == "Bruhanje, driska, zdravila":
+            fig_out.update_yaxes(selector=i - 1, dtick=1)
 
+fig_out.update_xaxes(type="date")
 fig_out.update_layout(height=700, width=600)
 
 # %%
