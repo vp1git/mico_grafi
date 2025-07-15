@@ -52,7 +52,7 @@ figs = {}
 def apply_scatterplot_style(fig):
     fig.update_traces(
         marker={"size": 3, "opacity": 0.5},
-        line={"width": 1},
+        line={"width": 1.5},
     )
 
 
@@ -81,40 +81,47 @@ figs["Hrana (g)"] = px.area(
 for i in figs["Hrana (g)"]["data"]:
     i["line"]["width"] = 0
 
-
+# %%
+pojedel_kcal = df_hrana.groupby("datum")["pojedel_kcal"].sum()
 figs["Pojedel (kcal)"] = px.scatter(
-    data_frame=df_hrana.groupby("datum", as_index=False).agg({"pojedel_kcal": np.sum}),
-    x="datum",
-    y="pojedel_kcal",
+    x=pojedel_kcal.index,
+    y=pojedel_kcal,
     trendline="rolling",
     trendline_options=dict(window="7d"),
+    color_discrete_sequence=["green"],
+    # labels=dict(x="Datum", y="Pojedel (kcal)"),
 )
 apply_scatterplot_style(figs["Pojedel (kcal)"])
 
 # %%
+date_range = pd.date_range(df_hrana.datum.min(), df_hrana.datum.max(), freq="D")
+df_drugo = dfs["log_drugo"]
 df_teza = dfs["log_teza"]
 
+# %%
+teza_g = df_teza.groupby("datum")["teza_g"].mean()
 figs["Teža (g)"] = px.scatter(
-    # data_frame=df_teza.groupby('datum', as_index=False).agg({'teza_g': np.mean}),
-    data_frame=df_teza,
-    x="datum",
-    y="teza_g",
+    x=teza_g.index,
+    y=teza_g,
     trendline="rolling",
     trendline_options=dict(window="7d"),
+    # labels=dict(x="Datum", y="Teža (g)"),
 )
 apply_scatterplot_style(figs["Teža (g)"])
 
 # %%
-df_drugo = dfs["log_drugo"]
-
+prednicortone = (
+    df_drugo[df_drugo.vrsta.isin(["prednisolone (5mg tablete)"])]
+    .groupby("datum")["količina"]
+    .sum()
+)
 figs["Prednicortone (5 mg tablete)"] = px.bar(
-    data_frame=df_drugo[df_drugo.vrsta == "prednisolone (5mg tablete)"],
-    x="datum",
-    y="količina",
+    x=prednicortone.index,
+    y=prednicortone,
+    # labels=dict(x="Datum", y="Prednicortone (5 mg tablete)"),
 )
 
 # %%
-date_range = pd.date_range(df_hrana.datum.min(), df_hrana.datum.max(), freq="D")
 bruhanje = (
     df_drugo[df_drugo.vrsta.isin(["bruhanje"])]
     .groupby("datum")["vrsta"]
@@ -122,25 +129,63 @@ bruhanje = (
     .reindex(date_range)
     .fillna(0)
 )
+
+color = "red"
+figs["Bruhanje (št. na teden)"] = px.bar(
+    x=bruhanje.index,
+    y=bruhanje,
+    color_discrete_sequence=[color],
+    # labels=dict(x="Datum", y="Bruhanje (št. na teden)"),
+)
+# figs["Bruhanje (št. na teden)"].add_traces(
+#     px.line(
+#         x=bruhanje.index,
+#         y=bruhanje.rolling("7d", center=True).sum(),
+#         color_discrete_sequence=[color],
+#     ).data,
+# )
+
+# %%
 driska = (
-    df_drugo[df_drugo.vrsta.isin(["driska", "mehko kakanje"])]
-    # df_drugo[df_drugo.vrsta.isin(["driska"])]
+    # df_drugo[df_drugo.vrsta.isin(["driska", "mehko kakanje"])]
+    df_drugo[df_drugo.vrsta.isin(["driska"])]
     .groupby("datum")["vrsta"]
     .count()
     .reindex(date_range)
     .fillna(0)
 )
-figs["Bruhanje (št. na teden)"] = px.line(
-    x=bruhanje.index,
-    y=bruhanje.rolling("7d", center=True).sum(),
-)
-apply_scatterplot_style(figs["Bruhanje (št. na teden)"])
-figs["Driska (št. na teden)"] = px.line(
+color = "orange"
+figs["Driska (št. na teden)"] = px.bar(
     x=driska.index,
-    y=driska.rolling("7d", center=True).sum(),
+    y=driska,
+    color_discrete_sequence=[color],
+    # labels=dict(x="Datum", y="Driska (št. na teden)"),
 )
-apply_scatterplot_style(figs["Driska (št. na teden)"])
-
+# figs["Driska (št. na teden)"].add_traces(
+#     px.line(
+#         x=driska.index,
+#         y=driska.rolling("7d", center=True).sum(),
+#         color_discrete_sequence=[color],
+#     ).data,
+# )
+# %%
+# driska_df = (
+#     df_drugo[df_drugo.vrsta.isin(["driska", "mehko kakanje"])]
+#     .assign(n=1)
+#     .groupby(["datum", "vrsta"], as_index=False)["n"]
+#     .count()
+#     .pivot(index="datum", columns="vrsta", values="n")
+#     .reindex(date_range)
+#     .fillna(0)
+#     .reset_index(names="datum")
+#     .melt(id_vars="datum", value_name="n")
+# )
+# figs["Driska (št. na teden)"] = px.bar(
+#     data_frame=driska_df,
+#     x="datum",
+#     y="n",
+#     color="vrsta",
+# )
 # %%
 df_drugo_vrste_izbor = [
     "infuzija s.c. (mL)",
@@ -203,5 +248,3 @@ fig_out.update_layout(height=700, width=600)
 st.plotly_chart(fig_out)
 
 st.markdown(f"[Izvorni podatki](https://docs.google.com/spreadsheets/d/{FILE_ID})")
-
-# %%
