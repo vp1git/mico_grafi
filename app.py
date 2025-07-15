@@ -114,17 +114,42 @@ figs["Prednicortone (5 mg tablete)"] = px.bar(
 )
 
 # %%
+date_range = pd.date_range(df_hrana.datum.min(), df_hrana.datum.max(), freq="D")
+bruhanje = (
+    df_drugo[df_drugo.vrsta.isin(["bruhanje"])]
+    .groupby("datum")["vrsta"]
+    .count()
+    .reindex(date_range)
+    .fillna(0)
+)
+driska = (
+    df_drugo[df_drugo.vrsta.isin(["driska", "mehko kakanje"])]
+    # df_drugo[df_drugo.vrsta.isin(["driska"])]
+    .groupby("datum")["vrsta"]
+    .count()
+    .reindex(date_range)
+    .fillna(0)
+)
+figs["Bruhanje (št. na teden)"] = px.line(
+    x=bruhanje.index,
+    y=bruhanje.rolling("7d", center=True).sum(),
+)
+apply_scatterplot_style(figs["Bruhanje (št. na teden)"])
+figs["Driska (št. na teden)"] = px.line(
+    x=driska.index,
+    y=driska.rolling("7d", center=True).sum(),
+)
+apply_scatterplot_style(figs["Driska (št. na teden)"])
+
+# %%
 df_drugo_vrste_izbor = [
-    "bruhanje",
-    "driska",
-    "mehko kakanje",
     "infuzija s.c. (mL)",
     "mirataz (uho)",
     "reglan (10mg tablete)",
-    "vominil (mg)",
     "prevomax",
-    "milprazon (tablete)",
+    "vominil (mg)",
     "farmatan (tablete)",
+    "milprazon (tablete)",
     "Erycitol (B12) (mL)",
 ]
 df_drugo_for_plot = df_drugo[df_drugo.vrsta.isin(df_drugo_vrste_izbor)].copy()
@@ -133,7 +158,7 @@ df_drugo_for_plot["vrsta"] = pd.Categorical(
     df_drugo_for_plot.vrsta, df_drugo_vrste_izbor
 )
 
-figs["Bruhanje, driska, zdravila"] = px.timeline(
+figs["Zdravila"] = px.timeline(
     data_frame=df_drugo_for_plot.sort_values("vrsta", ascending=False),
     x_start="datum",
     x_end="datum_plus_1",
@@ -141,22 +166,12 @@ figs["Bruhanje, driska, zdravila"] = px.timeline(
 )
 
 # %%
-
-# figs["Bruhanje (dni na teden)"] = px.line(
-#     x=df.datum,
-#     y=df.bruhal.rolling(window=7).sum(),
-# )
-# figs["Driska ali mehko kakanje (dni na teden)"] = px.line(
-#     x=df.datum,
-#     y=df.driska.rolling(window=7).sum(),
-# )
-
-# %%
 preselected_subplots = [
     "Pojedel (kcal)",
     "Teža (g)",
     "Prednicortone (5 mg tablete)",
-    "Bruhanje, driska, zdravila",
+    "Bruhanje (št. na teden)",
+    "Driska (št. na teden)",
 ]
 
 selected_subplots = st.multiselect(
@@ -178,7 +193,7 @@ fig_out = make_subplots(
 for i, fig_key in enumerate(selected_subplots, start=1):
     for trace in figs[fig_key].data:
         fig_out.add_trace(trace, row=i, col=1)
-        if fig_key == "Bruhanje, driska, zdravila":
+        if fig_key == "Zdravila":
             fig_out.update_yaxes(selector=i - 1, dtick=1)
 
 fig_out.update_xaxes(type="date")
