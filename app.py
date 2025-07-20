@@ -131,11 +131,11 @@ bruhanje = (
 )
 
 color = "red"
-figs["Bruhanje (št. na teden)"] = px.bar(
+figs["Bruhanje"] = px.bar(
     x=bruhanje.index,
     y=bruhanje,
     color_discrete_sequence=[color],
-    # labels=dict(x="Datum", y="Bruhanje (št. na teden)"),
+    # labels=dict(x="Datum", y="Bruhanje"),
 )
 # figs["Bruhanje (št. na teden)"].add_traces(
 #     px.line(
@@ -155,11 +155,11 @@ driska = (
     .fillna(0)
 )
 color = "orange"
-figs["Driska (št. na teden)"] = px.bar(
+figs["Driska"] = px.bar(
     x=driska.index,
     y=driska,
     color_discrete_sequence=[color],
-    # labels=dict(x="Datum", y="Driska (št. na teden)"),
+    # labels=dict(x="Datum", y="Driska"),
 )
 # figs["Driska (št. na teden)"].add_traces(
 #     px.line(
@@ -180,7 +180,7 @@ figs["Driska (št. na teden)"] = px.bar(
 #     .reset_index(names="datum")
 #     .melt(id_vars="datum", value_name="n")
 # )
-# figs["Driska (št. na teden)"] = px.bar(
+# figs["Driska"] = px.bar(
 #     data_frame=driska_df,
 #     x="datum",
 #     y="n",
@@ -215,8 +215,8 @@ preselected_subplots = [
     "Pojedel (kcal)",
     "Teža (g)",
     "Prednicortone (5 mg tablete)",
-    "Bruhanje (št. na teden)",
-    "Driska (št. na teden)",
+    "Bruhanje",
+    "Driska",
 ]
 
 selected_subplots = st.multiselect(

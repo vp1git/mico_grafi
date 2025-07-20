@@ -1,5 +1,8 @@
-- bruhanje, driska, zdravila: 
-    - reindex dates + rolling sum
+- predelaj 'zdravila' (zamaknjena x-os)
+- hitrejše nalaganje
+- funkcije v ločen fajl
 - hrana: 
-    - vir proteina
     - loceno mehka/suha (nad in pod x-osjo)
+    - vir proteina
+    - vnosi po urah?
+
