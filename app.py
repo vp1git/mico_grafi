@@ -198,16 +198,26 @@ df_drugo_vrste_izbor = [
     "Erycitol (B12) (mL)",
 ]
 df_drugo_for_plot = df_drugo[df_drugo.vrsta.isin(df_drugo_vrste_izbor)].copy()
-df_drugo_for_plot["datum_plus_1"] = df_drugo_for_plot.datum + pd.Timedelta(days=1)
+df_drugo_for_plot["info"] = df_drugo.apply(
+    lambda row: f"[{row.ura} :: {row.količina}]", axis="columns"
+)
+df_drugo_for_plot = (
+    df_drugo_for_plot.groupby(["datum", "vrsta"])["info"]
+    .aggregate(lambda x: " , ".join(x))
+    .reset_index()
+)
+df_drugo_for_plot["x_start"] = df_drugo_for_plot.datum - pd.Timedelta(days=0.4)
+df_drugo_for_plot["x_end"] = df_drugo_for_plot.datum + pd.Timedelta(days=0.4)
 df_drugo_for_plot["vrsta"] = pd.Categorical(
     df_drugo_for_plot.vrsta, df_drugo_vrste_izbor
 )
 
 figs["Zdravila"] = px.timeline(
     data_frame=df_drugo_for_plot.sort_values("vrsta", ascending=False),
-    x_start="datum",
-    x_end="datum_plus_1",
+    x_start="x_start",
+    x_end="x_end",
     y="vrsta",
+    hover_data=["datum", "vrsta", "info"],
 )
 
 # %%
