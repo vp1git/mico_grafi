@@ -51,7 +51,7 @@ figs = {}
 # %%
 def apply_scatterplot_style(fig):
     fig.update_traces(
-        marker={"size": 3, "opacity": 0.5},
+        marker={"size": 4, "opacity": 0.9},
         line={"width": 1.5},
     )
 
