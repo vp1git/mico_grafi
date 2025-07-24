@@ -69,9 +69,13 @@ df_hrana["pojedel_kcal"] = df_hrana.apply(
 )
 
 vrste_hrane_sorted = df_hrana["vrsta_hrane"].unique()
-df_hrana_pivot = df_hrana.pivot(
-    index="datum", columns="vrsta_hrane", values="pojedel_g"
-)[vrste_hrane_sorted].reset_index(names="datum")
+df_hrana_pivot = (
+    df_hrana.groupby(["datum", "vrsta_hrane"])
+    .sum(numeric_only=True)
+    .reset_index()
+    .pivot(index="datum", columns="vrsta_hrane", values="pojedel_g")[vrste_hrane_sorted]
+    .reset_index(names="datum")
+)
 
 
 figs["Hrana (g)"] = px.area(
