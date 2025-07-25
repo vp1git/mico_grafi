@@ -1,3 +1,5 @@
 .venv
 data
 output
+*.pyc
+__pycache__

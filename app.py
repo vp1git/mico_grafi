@@ -1,228 +1,130 @@
 # %%
-import numpy as np
 import pandas as pd
 import streamlit as st
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.io as pio
-
-pio.templates.default = "plotly"
-
-
-def get_google_sheet_url(file_id: str, sheet_id: int) -> str:
-    return (
-        "https://docs.google.com/spreadsheets/d/"
-        + file_id
-        # + "/export?format=csv"
-        + "/export?format=ods"
-        + "&gid="
-        + str(sheet_id)
-    )
-
-
-FILE_ID = "1K1XDOwUcrfbYr6QW0mOk_no1vzoCIygBwXc6qvSyqXM"
-SHEET_IDS = {
-    "log_hrana": 0,
-    "log_teza": 1237121504,
-    "log_drugo": 1362862141,
-    "vrste_hrana": 54176045,
-    "vrste_drugo": 1556951560,
-}
+from utils import get_data, FILE_ID
 
 # %%
 st.set_page_config(layout="wide")
 
 
 @st.cache_data(show_spinner="Nalaganje podatkov...")
-def get_data() -> pd.DataFrame:
-    dfs = {
-        # k: pd.read_csv(get_google_sheet_url(FILE_ID, sheet_id))
-        k: pd.read_excel(get_google_sheet_url(FILE_ID, sheet_id), decimal=",")
-        for k, sheet_id in SHEET_IDS.items()
-    }
-    return dfs
+def get_data_cached() -> pd.DataFrame:
+    return get_data()
 
 
 # %%
-dfs = get_data()
+data = get_data_cached()
 figs = {}
 
 
 # %%
-def apply_scatterplot_style(fig):
-    fig.update_traces(
-        marker={"size": 4, "opacity": 0.9},
-        line={"width": 1.5},
-    )
-
-
-# %%
-df_hrana = pd.merge(
-    dfs["log_hrana"],
-    dfs["vrste_hrana"],
-    how="left",
-    left_on="vrsta_hrane",
-    right_on="hrana",
-)
+df_hrana = pd.merge(data["log_hrana"], data["vrste_hrana"], how="left", on="vrsta")
 df_hrana["pojedel_kcal"] = df_hrana.apply(
     lambda row: row.pojedel_g * row.kcal_per_g, axis="columns"
 )
 
-vrste_hrane_sorted = df_hrana["vrsta_hrane"].unique()
-df_hrana_pivot = (
-    df_hrana.groupby(["datum", "vrsta_hrane"])
-    .sum(numeric_only=True)
-    .reset_index()
-    .pivot(index="datum", columns="vrsta_hrane", values="pojedel_g")[vrste_hrane_sorted]
-    .reset_index(names="datum")
-)
+
+def get_plot_hrana_vs_vrsta(df, value_col="pojedel_g"):
+    df_pivot = (
+        df.set_index("cas")
+        .groupby("vrsta")
+        .resample("1d")[value_col]
+        .sum()
+        .unstack("vrsta")[df["vrsta"].unique()]
+    )
+
+    fig = px.area(df_pivot, y=df_pivot.columns[1:], title="Hrana (g)")
+
+    for i in fig["data"]:
+        i["line"]["width"] = 0
+    return fig
 
 
-figs["Hrana (g)"] = px.area(
-    df_hrana_pivot, x="datum", y=df_hrana_pivot.columns[1:], title="Hrana (g)"
-)
+figs["Hrana (g)"] = get_plot_hrana_vs_vrsta(df_hrana, "pojedel_g")
+figs["Hrana (kcal)"] = get_plot_hrana_vs_vrsta(df_hrana, "pojedel_kcal")
 
-for i in figs["Hrana (g)"]["data"]:
-    i["line"]["width"] = 0
 
 # %%
-pojedel_kcal = df_hrana.groupby("datum")["pojedel_kcal"].sum()
-figs["Pojedel (kcal)"] = px.scatter(
-    x=pojedel_kcal.index,
-    y=pojedel_kcal,
-    trendline="rolling",
-    trendline_options=dict(window="7d"),
-    color_discrete_sequence=["green"],
-    # labels=dict(x="Datum", y="Pojedel (kcal)"),
-)
-apply_scatterplot_style(figs["Pojedel (kcal)"])
+def get_plot_hrana_pojedel(df, value_col="pojedel_kcal"):
+    pojedel_kcal = df.set_index("cas").resample("1d")[value_col].sum()
+    fig = px.scatter(
+        x=pojedel_kcal.index,
+        y=pojedel_kcal,
+        trendline="rolling",
+        trendline_options=dict(window="7d"),
+        color_discrete_sequence=["green"],
+        # labels=dict(x="Datum", y="Pojedel (kcal)"),
+    )
+    fig.update_traces(
+        marker={"size": 4, "opacity": 0.9},
+        line={"width": 1.5},
+    )
+    return fig
+
+
+figs["Pojedel (kcal)"] = get_plot_hrana_pojedel(df_hrana, "pojedel_kcal")
+figs["Pojedel (g)"] = get_plot_hrana_pojedel(df_hrana, "pojedel_g")
+
 
 # %%
-date_range = pd.date_range(df_hrana.datum.min(), df_hrana.datum.max(), freq="D")
-df_drugo = dfs["log_drugo"]
-df_teza = dfs["log_teza"]
+def get_plot_teza(df, value_col="teza_g"):
+    teza_g = df.set_index("cas").resample("1d")[value_col].mean()
+    fig = px.scatter(
+        x=teza_g.index,
+        y=teza_g,
+        trendline="rolling",
+        trendline_options=dict(window="7d"),
+        # labels=dict(x="Datum", y="Teža (g)"),
+    )
+    fig.update_traces(
+        marker={"size": 4, "opacity": 0.9},
+        line={"width": 1.5},
+    )
+    return fig
+
+
+figs["Teža (g)"] = get_plot_teza(data["log_teza"])
+
 
 # %%
-teza_g = df_teza.groupby("datum")["teza_g"].mean()
-figs["Teža (g)"] = px.scatter(
-    x=teza_g.index,
-    y=teza_g,
-    trendline="rolling",
-    trendline_options=dict(window="7d"),
-    # labels=dict(x="Datum", y="Teža (g)"),
-)
-apply_scatterplot_style(figs["Teža (g)"])
+def get_plot_drugo(df, vrsta, kolicina=False, color="blue"):
+    s = df[df.vrsta.isin([vrsta])].set_index("cas")
+    if kolicina:
+        s = s.resample("1d")["kolicina"].sum()
+    else:
+        s = s.resample("1d")["vrsta"].count()
+    fig = px.bar(
+        x=s.index,
+        y=s,
+        color_discrete_sequence=[color],
+        labels=dict(x="Datum", y=vrsta),
+    )
+    return fig
 
-# %%
-prednicortone = (
-    df_drugo[df_drugo.vrsta.isin(["prednisolone (5mg tablete)"])]
-    .groupby("datum")["količina"]
-    .sum()
-)
-figs["Prednicortone (5 mg tablete)"] = px.bar(
-    x=prednicortone.index,
-    y=prednicortone,
-    # labels=dict(x="Datum", y="Prednicortone (5 mg tablete)"),
-)
 
-# %%
-bruhanje = (
-    df_drugo[df_drugo.vrsta.isin(["bruhanje"])]
-    .groupby("datum")["vrsta"]
-    .count()
-    .reindex(date_range)
-    .fillna(0)
+figs["Prednicortone (5 mg tablete)"] = get_plot_drugo(
+    data["log_drugo"], "prednisolone (5mg tablete)", kolicina=True, color="blue"
 )
-
-color = "red"
-figs["Bruhanje"] = px.bar(
-    x=bruhanje.index,
-    y=bruhanje,
-    color_discrete_sequence=[color],
-    # labels=dict(x="Datum", y="Bruhanje"),
+figs["Bruhanje"] = get_plot_drugo(
+    data["log_drugo"], "bruhanje", kolicina=False, color="red"
 )
-# figs["Bruhanje (št. na teden)"].add_traces(
-#     px.line(
-#         x=bruhanje.index,
-#         y=bruhanje.rolling("7d", center=True).sum(),
-#         color_discrete_sequence=[color],
-#     ).data,
-# )
-
-# %%
-driska = (
-    # df_drugo[df_drugo.vrsta.isin(["driska", "mehko kakanje"])]
-    df_drugo[df_drugo.vrsta.isin(["driska"])]
-    .groupby("datum")["vrsta"]
-    .count()
-    .reindex(date_range)
-    .fillna(0)
+figs["Driska"] = get_plot_drugo(
+    data["log_drugo"], "driska", kolicina=False, color="orange"
 )
-color = "orange"
-figs["Driska"] = px.bar(
-    x=driska.index,
-    y=driska,
-    color_discrete_sequence=[color],
-    # labels=dict(x="Datum", y="Driska"),
+figs["Infuzija (mL)"] = get_plot_drugo(
+    data["log_drugo"], "infuzija s.c. (mL)", kolicina=True
 )
-# figs["Driska (št. na teden)"].add_traces(
-#     px.line(
-#         x=driska.index,
-#         y=driska.rolling("7d", center=True).sum(),
-#         color_discrete_sequence=[color],
-#     ).data,
-# )
-# %%
-# driska_df = (
-#     df_drugo[df_drugo.vrsta.isin(["driska", "mehko kakanje"])]
-#     .assign(n=1)
-#     .groupby(["datum", "vrsta"], as_index=False)["n"]
-#     .count()
-#     .pivot(index="datum", columns="vrsta", values="n")
-#     .reindex(date_range)
-#     .fillna(0)
-#     .reset_index(names="datum")
-#     .melt(id_vars="datum", value_name="n")
-# )
-# figs["Driska"] = px.bar(
-#     data_frame=driska_df,
-#     x="datum",
-#     y="n",
-#     color="vrsta",
-# )
-# %%
-df_drugo_vrste_izbor = [
-    "infuzija s.c. (mL)",
-    "mirataz (uho)",
-    "reglan (10mg tablete)",
-    "prevomax",
-    "vominil (mg)",
-    "farmatan (tablete)",
-    "milprazon (tablete)",
-    "Erycitol (B12) (mL)",
-]
-df_drugo_for_plot = df_drugo[df_drugo.vrsta.isin(df_drugo_vrste_izbor)].copy()
-df_drugo_for_plot["info"] = df_drugo.apply(
-    lambda row: f"[{row.ura} :: {row.količina}]", axis="columns"
+figs["Reglan (10mg tablete)"] = get_plot_drugo(
+    data["log_drugo"], "reglan (10mg tablete)", kolicina=True
 )
-df_drugo_for_plot = (
-    df_drugo_for_plot.groupby(["datum", "vrsta"])["info"]
-    .aggregate(lambda x: " , ".join(x))
-    .reset_index()
+figs["Farmatan (tablete)"] = get_plot_drugo(
+    data["log_drugo"], "farmatan (tablete)", kolicina=True
 )
-df_drugo_for_plot["x_start"] = df_drugo_for_plot.datum - pd.Timedelta(days=0.4)
-df_drugo_for_plot["x_end"] = df_drugo_for_plot.datum + pd.Timedelta(days=0.4)
-df_drugo_for_plot["vrsta"] = pd.Categorical(
-    df_drugo_for_plot.vrsta, df_drugo_vrste_izbor
-)
-
-figs["Zdravila"] = px.timeline(
-    data_frame=df_drugo_for_plot.sort_values("vrsta", ascending=False),
-    x_start="x_start",
-    x_end="x_end",
-    y="vrsta",
-    hover_data=["datum", "vrsta", "info"],
-)
+figs["Prevomax (mL)"] = get_plot_drugo(data["log_drugo"], "prevomax", kolicina=True)
+figs["Mirataz"] = get_plot_drugo(data["log_drugo"], "mirataz (uho)", kolicina=False)
 
 # %%
 preselected_subplots = [
@@ -237,7 +139,7 @@ selected_subplots = st.multiselect(
     "Izbira grafov", figs.keys(), default=preselected_subplots
 )
 
-st.button("Osveži podatke", on_click=get_data.clear)
+st.button("Osveži podatke", on_click=get_data_cached.clear)
 
 # %%
 fig_out = make_subplots(
@@ -248,12 +150,9 @@ fig_out = make_subplots(
     vertical_spacing=0.05,
 )
 
-# Add traces from px figures
 for i, fig_key in enumerate(selected_subplots, start=1):
     for trace in figs[fig_key].data:
         fig_out.add_trace(trace, row=i, col=1)
-        if fig_key == "Zdravila":
-            fig_out.update_yaxes(selector=i - 1, dtick=1)
 
 fig_out.update_xaxes(type="date")
 fig_out.update_layout(height=700, width=600)
