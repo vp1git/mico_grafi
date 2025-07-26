@@ -35,9 +35,7 @@ def get_plot_hrana_vs_vrsta(df, value_col="pojedel_g"):
         .sum()
         .unstack("vrsta")[df["vrsta"].unique()]
     )
-
-    fig = px.area(df_pivot, y=df_pivot.columns[1:], title="Hrana (g)")
-
+    fig = px.area(df_pivot, y=df_pivot.columns[1:])
     for i in fig["data"]:
         i["line"]["width"] = 0
     return fig
@@ -48,15 +46,14 @@ figs["Hrana (kcal)"] = get_plot_hrana_vs_vrsta(df_hrana, "pojedel_kcal")
 
 
 # %%
-def get_plot_hrana_pojedel(df, value_col="pojedel_kcal"):
-    pojedel_kcal = df.set_index("cas").resample("1d")[value_col].sum()
+def get_scatterplot_with_trendline(df, value_col, agg_func, color="blue"):
+    s = df.set_index("cas").resample("1d")[value_col].aggregate(agg_func)
     fig = px.scatter(
-        x=pojedel_kcal.index,
-        y=pojedel_kcal,
+        x=s.index,
+        y=s,
         trendline="rolling",
         trendline_options=dict(window="7d"),
-        color_discrete_sequence=["green"],
-        # labels=dict(x="Datum", y="Pojedel (kcal)"),
+        color_discrete_sequence=[color],
     )
     fig.update_traces(
         marker={"size": 4, "opacity": 0.9},
@@ -65,28 +62,15 @@ def get_plot_hrana_pojedel(df, value_col="pojedel_kcal"):
     return fig
 
 
-figs["Pojedel (kcal)"] = get_plot_hrana_pojedel(df_hrana, "pojedel_kcal")
-figs["Pojedel (g)"] = get_plot_hrana_pojedel(df_hrana, "pojedel_g")
-
-
-# %%
-def get_plot_teza(df, value_col="teza_g"):
-    teza_g = df.set_index("cas").resample("1d")[value_col].mean()
-    fig = px.scatter(
-        x=teza_g.index,
-        y=teza_g,
-        trendline="rolling",
-        trendline_options=dict(window="7d"),
-        # labels=dict(x="Datum", y="Teža (g)"),
-    )
-    fig.update_traces(
-        marker={"size": 4, "opacity": 0.9},
-        line={"width": 1.5},
-    )
-    return fig
-
-
-figs["Teža (g)"] = get_plot_teza(data["log_teza"])
+figs["Pojedel (kcal)"] = get_scatterplot_with_trendline(
+    df_hrana, "pojedel_kcal", agg_func="sum", color="green"
+)
+figs["Pojedel (g)"] = get_scatterplot_with_trendline(
+    df_hrana, "pojedel_g", agg_func="sum", color="green"
+)
+figs["Teža (g)"] = get_scatterplot_with_trendline(
+    data["log_teza"], "teza_g", agg_func="mean"
+)
 
 
 # %%
@@ -126,20 +110,21 @@ figs["Farmatan (tablete)"] = get_plot_drugo(
 figs["Prevomax (mL)"] = get_plot_drugo(data["log_drugo"], "prevomax", kolicina=True)
 figs["Mirataz"] = get_plot_drugo(data["log_drugo"], "mirataz (uho)", kolicina=False)
 
+
 # %%
-preselected_subplots = [
-    "Pojedel (kcal)",
-    "Teža (g)",
-    "Prednicortone (5 mg tablete)",
-    "Bruhanje",
-    "Driska",
-]
-
 selected_subplots = st.multiselect(
-    "Izbira grafov", figs.keys(), default=preselected_subplots
+    "Izbira grafov",
+    figs.keys(),
+    default=[
+        "Pojedel (kcal)",
+        "Teža (g)",
+        "Prednicortone (5 mg tablete)",
+        "Bruhanje",
+        "Driska",
+    ],
 )
-
 st.button("Osveži podatke", on_click=get_data_cached.clear)
+
 
 # %%
 fig_out = make_subplots(
@@ -156,6 +141,7 @@ for i, fig_key in enumerate(selected_subplots, start=1):
 
 fig_out.update_xaxes(type="date")
 fig_out.update_layout(height=700, width=600)
+
 
 # %%
 st.plotly_chart(fig_out)
