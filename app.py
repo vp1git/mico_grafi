@@ -168,5 +168,5 @@ df = pd.DataFrame(
 df["kcal_kumulativa"] = df.groupby("dan")["kcal"].cumsum()
 df["kcal_kumulativa_procent"] = df["kcal_kumulativa"] / 225 * 100
 
-fig_kumulativa = px.line(df, x="ura", y="kcal_kumulativa_procent", color="dan")
+fig_kumulativa = px.line(df, x="ura", y="kcal_kumulativa_procent", color="dan", line_shape="hv")
 st.plotly_chart(fig_kumulativa)
