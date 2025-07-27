@@ -1,7 +1,7 @@
+- uredi plot kcal po urah (kumulativa)
 - hrana: 
     - loceno mehka/suha (nad in pod x-osjo)
     - vir proteina
-    - plot po urah (kumulativa?)
 - summary tabela za zadnjih n dni (oz. obseg po izbiri) - za veterinarje
     - pivot (hrana, teža, driska, bruhanje, prevomax, reglan, drugo)
     - po dnevih in urah

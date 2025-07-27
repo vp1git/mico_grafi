@@ -1,4 +1,5 @@
 # %%
+import datetime
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -147,3 +148,25 @@ fig_out.update_layout(height=700, width=600)
 st.plotly_chart(fig_out)
 
 st.markdown(f"[Izvorni podatki](https://docs.google.com/spreadsheets/d/{FILE_ID})")
+
+# %%
+st.markdown(f"## Kumulativno procenti dnevnih kalorij:")
+kcal = (
+    df_hrana.set_index("cas")["pojedel_kcal"]
+    .loc["2025-07-18":]
+    .resample("1h", origin="start_day")
+    .sum()
+)
+df = pd.DataFrame(
+    {
+        "dan": kcal.index.to_series().dt.date,
+        "ura": kcal.index.to_series().dt.time,
+        "kcal": kcal,
+    },
+    index=kcal.index,
+)
+df["kcal_kumulativa"] = df.groupby("dan")["kcal"].cumsum()
+df["kcal_kumulativa_procent"] = df["kcal_kumulativa"] / 225 * 100
+
+fig_kumulativa = px.line(df, x="ura", y="kcal_kumulativa_procent", color="dan")
+st.plotly_chart(fig_kumulativa)
