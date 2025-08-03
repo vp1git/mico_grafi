@@ -295,14 +295,14 @@ date_start, date_end = st.date_input(
 )
 kategorije = st.multiselect(
     "Kategorije",
-    options=data["log_drugo"].vrsta.unique(),
+    options=data["log_drugo"].vrsta.unique().tolist(),
     default=[
         "bruhanje",
         "driska",
-        "mehko_kakanje",
-        "kakanje_dobro",
+        "mehko kakanje",
+        "kakanje dobro",
         "prednisolone (5mg tablete)",
-        "farmatan",
+        "farmatan (tablete)",
         "reglan (10mg tablete)",
         "prevomax",
         "infuzija s.c. (mL)",
