@@ -295,22 +295,12 @@ date_start, date_end = st.date_input(
 )
 kategorije = st.multiselect(
     "Kategorije",
-    options=[
-        "bruhanje",
-        "mehko_kakanje",
-        "driska",
-        "prednisolone (5mg tablete)",
-        "farmatan",
-        "reglan (10mg tablete)",
-        "prevomax",
-        "infuzija s.c. (mL)",
-        "dopolnilo Trovet Balance",
-        "Stronghold (selamectin) 45 mg v 0,75 mL",
-    ],
+    options=data["log_drugo"].vrsta.unique(),
     default=[
         "bruhanje",
-        "mehko_kakanje",
         "driska",
+        "mehko_kakanje",
+        "kakanje_dobro",
         "prednisolone (5mg tablete)",
         "farmatan",
         "reglan (10mg tablete)",
