@@ -7,6 +7,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.io as pio
 from utils import get_data, FILE_ID
+from jinja2 import Template
 
 # %%
 st.set_page_config(layout="wide")
@@ -99,6 +100,9 @@ figs["Bruhanje"] = get_plot_drugo(
 )
 figs["Driska"] = get_plot_drugo(
     data["log_drugo"], "driska", kolicina=False, color="orange"
+)
+figs["Mehko kakanje"] = get_plot_drugo(
+    data["log_drugo"], "mehko kakanje", kolicina=False, color="orange"
 )
 figs["Infuzija (mL)"] = get_plot_drugo(
     data["log_drugo"], "infuzija s.c. (mL)", kolicina=True
@@ -213,12 +217,110 @@ def get_plot_kcal_kumulativa(df_hrana, date_start, date_end, current_datetime):
 
 
 current_datetime = datetime.datetime.now(tz=ZoneInfo("Europe/Ljubljana"))
-date_start = (datetime.date(2025, 7, 18),)
-date_end = (datetime.date.today(),)
+date_start = datetime.date(2025, 7, 18)
+date_end = current_datetime.date()
 fig_kcal_kumulativa = get_plot_kcal_kumulativa(
     df_hrana,
-    date_start=datetime.date(2025, 7, 18),
-    date_end=current_datetime.date(),
+    date_start=date_start,
+    date_end=date_end,
     current_datetime=current_datetime,
 )
 st.plotly_chart(fig_kcal_kumulativa)
+
+
+# %%
+st.markdown(f"## Dnevnik")
+
+
+def get_summary_for_dates(date_start, date_end, kategorije):
+    template = Template(
+        """
+{% for item in items %}
+### {{ item.date }}
+Teža (g): {{item.teza}}
+
+Pojedel (kcal): {{item.kcal}}
+
+{{ item.entries }}
+{% endfor %}
+"""
+    )
+    date_range = pd.date_range(date_start, date_end)
+    kcal = (
+        df_hrana.set_index("cas")
+        .resample("1d")["pojedel_kcal"]
+        .sum()
+        .reindex(date_range)
+    )
+    teza = (
+        data["log_teza"]
+        .set_index("cas")
+        .resample("1d")["teza_g"]
+        .mean()
+        .reindex(date_range)
+    )
+
+    df = data["log_drugo"]
+    df = df[df["cas"].dt.date.between(date_start, date_end)]
+    df["dan"] = df["cas"].dt.date
+    df["ura"] = df["cas"].dt.time
+
+    # Group by day and render
+    items = []
+    for date, group in df.groupby(df["dan"]):
+        group_df = group[["ura", "vrsta", "kolicina"]].reset_index(drop=True).fillna("")
+        group_df = group_df[group_df.vrsta.isin(kategorije)]
+        items.append(
+            {
+                "date": date,
+                "teza": f"{teza.at[str(date)]:.0f}",
+                "kcal": f"{kcal.at[str(date)]:.0f}",
+                "entries": (
+                    group_df.to_markdown(index=False) if len(group_df) > 0 else ""
+                ),
+            }
+        )
+
+    rendered = template.render(items=items)
+    return rendered
+
+
+date_start, date_end = st.date_input(
+    "Časovni razpon",
+    value=(
+        current_datetime.date() - datetime.timedelta(days=7),
+        current_datetime.date(),
+    ),
+    format="YYYY-MM-DD",
+)
+kategorije = st.multiselect(
+    "Kategorije",
+    options=[
+        "bruhanje",
+        "mehko_kakanje",
+        "driska",
+        "prednisolone (5mg tablete)",
+        "farmatan",
+        "reglan (10mg tablete)",
+        "prevomax",
+        "infuzija s.c. (mL)",
+        "dopolnilo Trovet Balance",
+        "Stronghold (selamectin) 45 mg v 0,75 mL",
+    ],
+    default=[
+        "bruhanje",
+        "mehko_kakanje",
+        "driska",
+        "prednisolone (5mg tablete)",
+        "farmatan",
+        "reglan (10mg tablete)",
+        "prevomax",
+        "infuzija s.c. (mL)",
+        "dopolnilo Trovet Balance",
+        "Stronghold (selamectin) 45 mg v 0,75 mL",
+    ],
+)
+
+st.markdown(get_summary_for_dates(date_start, date_end, kategorije))
+
+# %%
