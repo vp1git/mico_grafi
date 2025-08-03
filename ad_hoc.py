@@ -1,4 +1,5 @@
 # %%
+import datetime
 from utils import get_data
 import pandas as pd
 import plotly.express as px
@@ -21,7 +22,7 @@ df = pd.DataFrame(
         "g": data["log_teza"].set_index("cas")["teza_g"].resample("1d").mean(),
     }
 )
-df['g'] = df['g'].interpolate()
+df["g"] = df["g"].interpolate()
 df
 # # %%
 # df = df.rolling("7d").mean()
@@ -46,7 +47,7 @@ fig2 = px.scatter(
     df,
     x="kcal",
     y="g_delta",
-    color='g',
+    color="g",
     color_continuous_scale="solar",
     # trendline="lowess", trendline_options=dict(frac=0.9),
     trendline="ols",  # trendline_options=dict(log_x=True),
@@ -57,6 +58,10 @@ fig2.show()
 # results = px.get_trendline_results(fig2)
 # print(results.iat[0, 0].summary())
 
+# %%
+
+
+# px.scatter(df, x='ura', y='kcal_kumulativa_procent', color='dan')
 # %
 #
 #

@@ -151,22 +151,70 @@ st.markdown(f"[Izvorni podatki](https://docs.google.com/spreadsheets/d/{FILE_ID}
 
 # %%
 st.markdown(f"## Kumulativno procenti dnevnih kalorij:")
-kcal = (
-    df_hrana.set_index("cas")["pojedel_kcal"]
-    .loc["2025-07-18":]
-    .resample("1h", origin="start_day")
-    .sum()
-)
-df = pd.DataFrame(
-    {
-        "dan": kcal.index.to_series().dt.date,
-        "ura": kcal.index.to_series().dt.time,
-        "kcal": kcal,
-    },
-    index=kcal.index,
-)
-df["kcal_kumulativa"] = df.groupby("dan")["kcal"].cumsum()
-df["kcal_kumulativa_procent"] = df["kcal_kumulativa"] / 225 * 100
 
-fig_kumulativa = px.line(df, x="ura", y="kcal_kumulativa_procent", color="dan", line_shape="hv")
-st.plotly_chart(fig_kumulativa)
+
+def get_plot_kcal_kumulativa(
+    df_hrana,
+    date_start=datetime.date(2025, 7, 18),
+    date_end=datetime.date.today(),
+    current_time=datetime.datetime.now().time(),
+):
+    kcal = df_hrana.set_index("cas")["pojedel_kcal"].loc[
+        date_start : date_end + datetime.timedelta(days=1)
+    ]
+    df = pd.DataFrame(
+        {
+            "dan": kcal.index.date,
+            "ura": kcal.index.time,
+            "kcal": kcal,
+        },
+        index=kcal.index,
+    )
+    df = pd.concat(
+        [
+            df,
+            pd.DataFrame(
+                [
+                    {"dan": d, "ura": datetime.time(0, 0), "kcal": 0}
+                    for d in df["dan"].unique()
+                ]
+            ),
+            pd.DataFrame(
+                [
+                    (
+                        {"dan": d, "ura": current_time, "kcal": 0}
+                        if d == datetime.date.today()
+                        else {"dan": d, "ura": datetime.time(23, 59), "kcal": 0}
+                    )
+                    for d in df["dan"].unique()
+                ]
+            ),
+        ]
+    ).sort_values(["dan", "ura"])
+
+    df["ura"] = df["ura"].map(
+        lambda t: datetime.datetime.combine(datetime.date.today(), t)
+    )
+    df["kcal_kumulativa"] = df.groupby("dan")["kcal"].cumsum()
+    df["kcal_kumulativa_procent"] = df["kcal_kumulativa"] / 225 * 100
+
+    fig = px.line(
+        df,
+        x="ura",
+        y="kcal_kumulativa_procent",
+        color="dan",
+        line_shape="hv",
+        markers=True,
+    )
+
+    for trace in fig.data:
+        trace.opacity = 1.0 if trace.name == str(date_end) else 0.3
+    fig.update_traces(marker=dict(size=5))
+    fig.add_vline(x=current_time, line_width=1, line_color="red", opacity=0.5)
+    fig.update_layout(legend={"traceorder": "reversed"})
+
+    return fig
+
+
+fig_kcal_kumulativa = get_plot_kcal_kumulativa(df_hrana)
+st.plotly_chart(fig_kcal_kumulativa)
