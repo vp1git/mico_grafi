@@ -1,5 +1,6 @@
 # %%
 import datetime
+from zoneinfo import ZoneInfo
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -153,12 +154,7 @@ st.markdown(f"[Izvorni podatki](https://docs.google.com/spreadsheets/d/{FILE_ID}
 st.markdown(f"## Kumulativno procenti dnevnih kalorij:")
 
 
-def get_plot_kcal_kumulativa(
-    df_hrana,
-    date_start=datetime.date(2025, 7, 18),
-    date_end=datetime.date.today(),
-    current_time=datetime.datetime.now().time(),
-):
+def get_plot_kcal_kumulativa(df_hrana, date_start, date_end, current_datetime):
     kcal = df_hrana.set_index("cas")["pojedel_kcal"].loc[
         date_start : date_end + datetime.timedelta(days=1)
     ]
@@ -182,8 +178,8 @@ def get_plot_kcal_kumulativa(
             pd.DataFrame(
                 [
                     (
-                        {"dan": d, "ura": current_time, "kcal": 0}
-                        if d == datetime.date.today()
+                        {"dan": d, "ura": current_datetime.time(), "kcal": 0}
+                        if d == current_datetime.date()
                         else {"dan": d, "ura": datetime.time(23, 59), "kcal": 0}
                     )
                     for d in df["dan"].unique()
@@ -193,7 +189,7 @@ def get_plot_kcal_kumulativa(
     ).sort_values(["dan", "ura"])
 
     df["ura"] = df["ura"].map(
-        lambda t: datetime.datetime.combine(datetime.date.today(), t)
+        lambda t: datetime.datetime.combine(current_datetime.date(), t)
     )
     df["kcal_kumulativa"] = df.groupby("dan")["kcal"].cumsum()
     df["kcal_kumulativa_procent"] = df["kcal_kumulativa"] / 225 * 100
@@ -210,11 +206,19 @@ def get_plot_kcal_kumulativa(
     for trace in fig.data:
         trace.opacity = 1.0 if trace.name == str(date_end) else 0.3
     fig.update_traces(marker=dict(size=5))
-    fig.add_vline(x=current_time, line_width=1, line_color="red", opacity=0.5)
+    fig.add_vline(x=current_datetime, line_width=1, line_color="red", opacity=0.5)
     fig.update_layout(legend={"traceorder": "reversed"})
 
     return fig
 
 
-fig_kcal_kumulativa = get_plot_kcal_kumulativa(df_hrana)
+current_datetime = datetime.datetime.now(tz=ZoneInfo("Europe/Ljubljana"))
+date_start = (datetime.date(2025, 7, 18),)
+date_end = (datetime.date.today(),)
+fig_kcal_kumulativa = get_plot_kcal_kumulativa(
+    df_hrana,
+    date_start=datetime.date(2025, 7, 18),
+    date_end=current_datetime.date(),
+    current_datetime=current_datetime,
+)
 st.plotly_chart(fig_kcal_kumulativa)
