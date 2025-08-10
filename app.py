@@ -1,6 +1,7 @@
 # %%
 import datetime
 from zoneinfo import ZoneInfo
+from babel.dates import format_date
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -260,7 +261,8 @@ Pojedel (kcal): {{item.kcal}}
         .reindex(date_range)
     )
 
-    df = data["log_drugo"]
+    df = data["log_drugo"].join(data["vrste_drugo"].set_index("vrsta"), on="vrsta")
+    df = df[df.tip.isin(kategorije)]
     df = df[df["cas"].dt.date.between(date_start, date_end)]
     df["dan"] = df["cas"].dt.date
     df["ura"] = df["cas"].dt.time
@@ -269,10 +271,9 @@ Pojedel (kcal): {{item.kcal}}
     items = []
     for date, group in df.groupby(df["dan"]):
         group_df = group[["ura", "vrsta", "kolicina"]].reset_index(drop=True).fillna("")
-        group_df = group_df[group_df.vrsta.isin(kategorije)]
         items.append(
             {
-                "date": date,
+                "date": format_date(date, "EEE d. MMM yyyy", locale="sl_SI"),
                 "teza": f"{teza.at[str(date)]:.0f}",
                 "kcal": f"{kcal.at[str(date)]:.0f}",
                 "entries": (
@@ -295,20 +296,8 @@ date_start, date_end = st.date_input(
 )
 kategorije = st.multiselect(
     "Kategorije",
-    options=data["log_drugo"].vrsta.unique().tolist(),
-    default=[
-        "bruhanje",
-        "driska",
-        "mehko kakanje",
-        "kakanje dobro",
-        "prednisolone (5mg tablete)",
-        "farmatan (tablete)",
-        "reglan (10mg tablete)",
-        "prevomax",
-        "infuzija s.c. (mL)",
-        "dopolnilo Trovet Balance",
-        "Stronghold (selamectin) 45 mg v 0,75 mL",
-    ],
+    options=["kakanje_bruhanje", "zdravilo", "probiotik_dodatek"],
+    default=["kakanje_bruhanje", "zdravilo"],
 )
 
 st.markdown(get_summary_for_dates(date_start, date_end, kategorije))

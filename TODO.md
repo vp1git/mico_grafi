@@ -1,12 +1,7 @@
-- uredi plot kcal po urah (kumulativa)
 - hrana: 
     - loceno mehka/suha (nad in pod x-osjo)
     - vir proteina
-- summary tabela za zadnjih n dni (oz. obseg po izbiri) - za veterinarje
-    - pivot (hrana, teža, driska, bruhanje, prevomax, reglan, drugo)
-    - po dnevih in urah
-    - (poglej primer ki smo ga sprintali (moj mail za Ano 2.7.)
-    - spomni se kaj so spraševali pred operacijo, mail od Ane 16.7., ...)
 - predelaj imena zdravil
 - plotly theme global ?
 - hemogrami v calc
+- dnevnik v obliki koledarja

@@ -16,6 +16,24 @@ df_hrana["pojedel_kcal"] = df_hrana.apply(
 )
 
 # %%
+from babel.dates import format_date
+
+# %%
+from zoneinfo import ZoneInfo
+current_datetime = datetime.datetime.now(tz=ZoneInfo("Europe/Ljubljana"))
+date_start, date_end = (
+    current_datetime.date() - datetime.timedelta(days=7),
+    current_datetime.date(),
+)
+df = data["log_drugo"].join(data["vrste_drugo"].set_index("vrsta"), on="vrsta")
+df = df[df["cas"].dt.date.between(date_start, date_end)]
+df["dan"] = df["cas"].dt.date
+df["ura"] = df["cas"].dt.time
+# %%
+[i.strftime("%a %-d. %b %Y") for i in df.dan]
+[format_date(i, locale='sl_SI') for i in df.dan]
+
+# %%
 df = pd.DataFrame(
     {
         "kcal": df_hrana.set_index("cas")["pojedel_kcal"].resample("1d").sum(),
