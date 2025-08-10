@@ -265,7 +265,7 @@ Pojedel (kcal): {{item.kcal}}
     df = df[df.tip.isin(kategorije)]
     df = df[df["cas"].dt.date.between(date_start, date_end)]
     df["dan"] = df["cas"].dt.date
-    df["ura"] = df["cas"].dt.time
+    df["ura"] = df["cas"].dt.strftime("%H:%M")
 
     # Group by day and render
     items = []
