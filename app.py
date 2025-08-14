@@ -240,7 +240,7 @@ def get_summary_for_dates(date_start, date_end, kategorije):
 ### {{ item.date }}
 Teža (g): {{item.teza}}
 
-Pojedel (kcal): {{item.kcal}}
+Pojedel (kcal): {{item.kcal}} ({{item.kcal_percent}}%)
 
 {{ item.entries }}
 {% endfor %}
@@ -276,6 +276,7 @@ Pojedel (kcal): {{item.kcal}}
                 "date": format_date(date, "EEE d. MMM yyyy", locale="sl_SI"),
                 "teza": f"{teza.at[str(date)]:.0f}",
                 "kcal": f"{kcal.at[str(date)]:.0f}",
+                "kcal_percent": f"{int(round(kcal.at[str(date)]/225*100,0))}",
                 "entries": (
                     group_df.to_markdown(index=False) if len(group_df) > 0 else ""
                 ),
