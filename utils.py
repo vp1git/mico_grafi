@@ -23,7 +23,7 @@ def get_df_from_google_sheets(sheet_id: int) -> pd.DataFrame:
 
 def get_data() -> dict[pd.DataFrame]:
     log_hrana = get_df_from_google_sheets(SHEET_IDS["log_hrana"])[
-        ["cas", "vrsta", "pojedel_g"]
+        ["cas", "vrsta", "nacin", "pojedel_g"]
     ]
     log_teza = get_df_from_google_sheets(SHEET_IDS["log_teza"])[["cas", "teza_g"]]
     log_drugo = get_df_from_google_sheets(SHEET_IDS["log_drugo"])[

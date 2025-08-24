@@ -19,6 +19,11 @@ def get_data_cached() -> pd.DataFrame:
     return get_data()
 
 
+if "first_load" not in st.session_state:
+    st.session_state.first_load = True
+    st.cache_data.clear()
+
+
 # %%
 data = get_data_cached()
 figs = {}
@@ -94,7 +99,10 @@ def get_plot_drugo(df, vrsta, kolicina=False, color="blue"):
 
 
 figs["Prednicortone (5 mg tablete)"] = get_plot_drugo(
-    data["log_drugo"], "prednisolone (5mg tablete)", kolicina=True, color="blue"
+    data["log_drugo"],
+    "Prednicortone (prednisolone 5mg tablete) [tablet]",
+    kolicina=True,
+    color="blue",
 )
 figs["Bruhanje"] = get_plot_drugo(
     data["log_drugo"], "bruhanje", kolicina=False, color="red"
@@ -109,12 +117,14 @@ figs["Infuzija (mL)"] = get_plot_drugo(
     data["log_drugo"], "infuzija s.c. (mL)", kolicina=True
 )
 figs["Reglan (10mg tablete)"] = get_plot_drugo(
-    data["log_drugo"], "reglan (10mg tablete)", kolicina=True
+    data["log_drugo"], "Reglan (metoclopramide 10 mg tablete) [tablet]", kolicina=True
 )
 figs["Farmatan (tablete)"] = get_plot_drugo(
     data["log_drugo"], "farmatan (tablete)", kolicina=True
 )
-figs["Prevomax (mL)"] = get_plot_drugo(data["log_drugo"], "prevomax", kolicina=True)
+figs["Prevomax (mL)"] = get_plot_drugo(
+    data["log_drugo"], "Prevomax (maropitant 10 mg/mL) [mL]", kolicina=True
+)
 figs["Mirataz"] = get_plot_drugo(data["log_drugo"], "mirataz (uho)", kolicina=False)
 
 
@@ -130,7 +140,6 @@ selected_subplots = st.multiselect(
         "Driska",
     ],
 )
-st.button("Osveži podatke", on_click=get_data_cached.clear)
 
 
 # %%

@@ -15,11 +15,116 @@ df_hrana["pojedel_kcal"] = df_hrana.apply(
     lambda row: row.pojedel_g * row.kcal_per_g, axis="columns"
 )
 
+
+#
+#
+#
+# %%
+#
+data['log_drugo']
+#
+#
+#
+
+# %%
+def plot_hrana_sam_sonda(df_hrana, procent=True):
+    df = df_hrana.copy().set_index("cas")
+    sam = df["pojedel_kcal"][df["nacin"].isin(["sam", "z roke / ponujeno"])]
+    sonda = df["pojedel_kcal"][df["nacin"].isin(["po sondi"])]
+    df = pd.concat(
+        {
+            "sam / z roke": sam.resample(
+                "1d",
+            )
+            .sum()
+            .reindex(pd.date_range("2025-07-17", "2025-08-23")),
+            "sonda": sonda.resample("1d")
+            .sum()
+            .reindex(pd.date_range("2025-07-17", "2025-08-23")),
+        },
+        axis="columns",
+    ).melt(ignore_index=False, value_name="pojedel_kcal", var_name="nacin")
+    df["pojedel_procent"] = df["pojedel_kcal"] / 225 * 100
+
+    if procent:
+        y = "pojedel_procent"
+        hline = 100
+    else:
+        y = "pojedel_kcal"
+        hline = 225
+    fig = (
+        px.bar(
+            df,
+            y=y,
+            color="nacin",
+            # color_discrete_sequence=["darkgray", "lightgray"],
+            template="plotly_white",
+        )
+        .add_hline(hline, line_dash="dash")
+        .update_xaxes(dtick="1d", tickangle=90)
+    )
+
+    return fig
+
+
+plot_hrana_sam_sonda(df_hrana, procent=FalseS)
+
+
+#
+#
+#
+# %%
+def plot_bruhanje_kakanje(df_log_drugo, df_vrste_drugo):
+    df = data["log_drugo"].join(data["vrste_drugo"].set_index("vrsta"), on="vrsta")
+    df = df[df["tip"] == "kakanje_bruhanje"]
+    df["tip"] = df["vrsta"].map(lambda x: "bruhanje" if x == "bruhanje" else "kakanje")
+    df = df[df["cas"] >= datetime.datetime(2025, 7, 17)]
+    fig = (
+        px.scatter(
+            df,
+            x="cas",
+            y="tip",
+            color="vrsta",
+            height=180,
+            color_discrete_map={
+                "bruhanje": "red",
+                "driska": "yellow",
+                "mehko kakanje": "orange",
+                "kakanje dobro": "brown",
+                "kakanje trdo": "black",
+            },
+        )
+        .update_xaxes(dtick="1d", tickangle=90)
+        .update_layout(
+            legend=dict(
+                orientation="h",  # show entries horizontally
+                xanchor="center",  # use center of legend as anchor
+                x=0.5,
+                y=-1,
+            )
+        )
+    )
+    return fig
+
+
+plot_bruhanje_kakanje(data["log_drugo"], data["vrste_drugo"])
+
+#
+#
+#
+# %%
+df = data["log_drugo"]
+time = df.cas.dt.time[df.vrsta == "bruhanje"]
+time = [t.hour for t in time if t != (datetime.time(0, 0))]
+# px.bar(x=time,points='all')
+px.histogram(x=time, nbins=24)
+
 # %%
 from babel.dates import format_date
 
 # %%
 from zoneinfo import ZoneInfo
+
 current_datetime = datetime.datetime.now(tz=ZoneInfo("Europe/Ljubljana"))
 date_start, date_end = (
     current_datetime.date() - datetime.timedelta(days=7),
@@ -31,7 +136,7 @@ df["dan"] = df["cas"].dt.date
 df["ura"] = df["cas"].dt.time
 # %%
 [i.strftime("%a %-d. %b %Y") for i in df.dan]
-[format_date(i, locale='sl_SI') for i in df.dan]
+[format_date(i, locale="sl_SI") for i in df.dan]
 
 # %%
 df = pd.DataFrame(
