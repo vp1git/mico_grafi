@@ -123,6 +123,37 @@ with st.expander("Grafi po dnevih"):
     figs["Hrana (g)"] = get_plot_hrana_vs_vrsta(df_hrana, "pojedel_g")
     figs["Hrana (kcal)"] = get_plot_hrana_vs_vrsta(df_hrana, "pojedel_kcal")
 
+    def plot_pojedel_nacin(df):
+        df = df[df["cas"] > "2025-07-17"]
+        df["nacin"] = (
+            df["nacin"]
+            .astype("category")
+            .cat.set_categories(["sam", "z roke / ponujeno", "po sondi"], ordered=True)
+        )
+        df = (
+            df.set_index("cas")
+            .groupby("nacin")["pojedel_kcal"]
+            .resample("1d", include_groups=False)
+            .sum()
+            .reset_index()
+        )
+        fig = px.bar(
+            df,
+            x="cas",
+            y="pojedel_kcal",
+            color="nacin",
+            color_discrete_map={
+                "sam": "#2CA02C",
+                "z roke / ponujeno": "#2E91E5",
+                "po sondi": "#BCBD22",
+            },
+            barmode="relative",
+        )
+        fig.add_hline(225, line_dash="dash")
+        return fig
+
+    figs["Pojedel način [kcal]"] = plot_pojedel_nacin(df_hrana)
+
     def get_scatterplot_with_trendline(df, value_col, agg_func, color="blue"):
         s = df.set_index("cas").resample("1d")[value_col].aggregate(agg_func)
         fig = px.scatter(
@@ -168,6 +199,24 @@ with st.expander("Grafi po dnevih"):
         kolicina=True,
         color="blue",
     )
+    figs["Zofran (ondansetron 4mg tablete) [tablet]"] = get_plot_drugo(
+        data["log_drugo"],
+        "Zofran (ondansetron 4mg tablete) [tablet]",
+        kolicina=True,
+        color="blue",
+    )
+    figs["Leukeran (chlorambucil 2mg tablete) [tablet]"] = get_plot_drugo(
+        data["log_drugo"],
+        "Leukeran (chlorambucil 2mg tablete) [tablet]",
+        kolicina=True,
+        color="blue",
+    )
+    figs["Cerenia (maropitant 16 mg tablete) [tablet]"] = get_plot_drugo(
+        data["log_drugo"],
+        "Cerenia (maropitant 16 mg tablete) [tablet]",
+        kolicina=True,
+        color="blue",
+    )
     figs["Bruhanje"] = get_plot_drugo(
         data["log_drugo"], "bruhanje", kolicina=False, color="red"
     )
@@ -197,11 +246,9 @@ with st.expander("Grafi po dnevih"):
         "Izbira grafov",
         figs.keys(),
         default=[
-            "Pojedel (kcal)",
+            "Leukeran (chlorambucil 2mg tablete) [tablet]",
+            "Pojedel način [kcal]",
             "Teža (g)",
-            "Prednicortone (5 mg tablete)",
-            "Bruhanje",
-            "Driska",
         ],
     )
 
@@ -218,6 +265,10 @@ with st.expander("Grafi po dnevih"):
             fig_out.add_trace(trace, row=i, col=1)
 
     fig_out.update_xaxes(type="date")
+    fig_out.update_xaxes(tickangle=-90)
+    # fig_out.update_xaxes(dtick='w1')
+    fig_out.update_xaxes(range=["2025-07-15", current_datetime.strftime("%Y-%m-%d")])
+    fig_out.update_layout({"barmode": "stack"})
     fig_out.update_layout(height=700, width=600)
 
     st.plotly_chart(fig_out)

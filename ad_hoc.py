@@ -37,10 +37,10 @@ def plot_hrana_sam_sonda(df_hrana, procent=True):
                 "1d",
             )
             .sum()
-            .reindex(pd.date_range("2025-07-17", "2025-08-23")),
+            .reindex(pd.date_range("2025-07-17", "2025-08-26")),
             "sonda": sonda.resample("1d")
             .sum()
-            .reindex(pd.date_range("2025-07-17", "2025-08-23")),
+            .reindex(pd.date_range("2025-07-17", "2025-08-26")),
         },
         axis="columns",
     ).melt(ignore_index=False, value_name="pojedel_kcal", var_name="nacin")
@@ -67,7 +67,7 @@ def plot_hrana_sam_sonda(df_hrana, procent=True):
     return fig
 
 
-plot_hrana_sam_sonda(df_hrana, procent=FalseS)
+plot_hrana_sam_sonda(df_hrana, procent=False)
 
 
 #
