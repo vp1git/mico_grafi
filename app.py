@@ -137,10 +137,11 @@ with st.expander("Grafi po dnevih"):
             .sum()
             .reset_index()
         )
+        df["pojedel_procent"] = df["pojedel_kcal"] / 255 * 100
         fig = px.bar(
             df,
             x="cas",
-            y="pojedel_kcal",
+            y="pojedel_procent",
             color="nacin",
             color_discrete_map={
                 "sam": "#2CA02C",
@@ -149,7 +150,7 @@ with st.expander("Grafi po dnevih"):
             },
             barmode="relative",
         )
-        fig.add_hline(225, line_dash="dash")
+
         return fig
 
     figs["Pojedel način [kcal]"] = plot_pojedel_nacin(df_hrana)
