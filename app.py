@@ -137,7 +137,7 @@ with st.expander("Grafi po dnevih"):
             .sum()
             .reset_index()
         )
-        df["pojedel_procent"] = df["pojedel_kcal"] / 255 * 100
+        df["pojedel_procent"] = df["pojedel_kcal"] / 225 * 100
         fig = px.bar(
             df,
             x="cas",
@@ -153,7 +153,7 @@ with st.expander("Grafi po dnevih"):
 
         return fig
 
-    figs["Pojedel način [kcal]"] = plot_pojedel_nacin(df_hrana)
+    figs["Pojedel način [%]"] = plot_pojedel_nacin(df_hrana)
 
     def get_scatterplot_with_trendline(df, value_col, agg_func, color="blue"):
         s = df.set_index("cas").resample("1d")[value_col].aggregate(agg_func)
@@ -248,7 +248,7 @@ with st.expander("Grafi po dnevih"):
         figs.keys(),
         default=[
             "Leukeran (chlorambucil 2mg tablete) [tablet]",
-            "Pojedel način [kcal]",
+            "Pojedel način [%]",
             "Teža (g)",
         ],
     )

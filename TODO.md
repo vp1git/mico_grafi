@@ -1,7 +1,11 @@
+- graf kakanje - za vse 4 tipe (dobro, trdo, mehko, driska)
+- teža, pojedel: toggle točke/trendline (oz. slider N za trendline average N days)
+- graf pojedel [%]
 - hrana: 
     - loceno mehka/suha (nad in pod x-osjo)
     - vir proteina
 - predelaj imena zdravil
+- prevod angleščina?
 - plotly theme global ?
 - hemogrami v calc
 - dnevnik v obliki koledarja
