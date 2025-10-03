@@ -263,7 +263,8 @@ selected_subplots = st.multiselect(
     "Izbira grafov",
     figs.keys(),
     default=[
-        "Pojedel način [%]",
+        # "Pojedel način [%]",
+        "Pojedel (%)",
         "Teža (g)",
         "Leukeran (chlorambucil 2mg tablete) [tablet]",
     ],
