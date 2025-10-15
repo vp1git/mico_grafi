@@ -333,6 +333,7 @@ fig_out.update_xaxes(
 )
 fig_out.update_layout({"barmode": "stack"})
 fig_out.update_layout(height=700, width=600)
+fig_out.update_layout(legend=dict(orientation="h", yanchor="bottom", y=-0.6))
 
 st.plotly_chart(fig_out)
 
