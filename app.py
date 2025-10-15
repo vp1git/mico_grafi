@@ -165,13 +165,22 @@ def plot_pojedel_nacin(df):
 figs["Pojedel način [%]"] = plot_pojedel_nacin(df_hrana)
 
 
-def get_scatterplot_with_trendline(df, value_col, agg_func, color="blue"):
-    s = df.set_index("cas").resample("1d")[value_col].aggregate(agg_func)
+rolling_window_days = st.number_input("Št. dni za povprečje", 3, 30, value=7, step=1)
+
+
+def get_scatterplot_with_trendline(
+    df, value_col, resample=True, agg_func="mean", rolling_window_days=7, color="blue"
+):
+    if resample:
+        s = df.set_index("cas").resample("1d")[value_col].aggregate(agg_func)
+    else:
+        s = df.set_index("cas")[value_col]
+
     fig = px.scatter(
         x=s.index,
         y=s,
         trendline="rolling",
-        trendline_options=dict(window="7d"),
+        trendline_options=dict(window=f"{rolling_window_days}d"),
         color_discrete_sequence=[color],
     )
     fig.update_traces(
@@ -182,16 +191,33 @@ def get_scatterplot_with_trendline(df, value_col, agg_func, color="blue"):
 
 
 figs["Pojedel (kcal)"] = get_scatterplot_with_trendline(
-    df_hrana, "pojedel_kcal", agg_func="sum", color="green"
+    df_hrana,
+    "pojedel_kcal",
+    agg_func="sum",
+    rolling_window_days=rolling_window_days,
+    color="green",
 )
 figs["Pojedel (%)"] = get_scatterplot_with_trendline(
-    df_hrana, "pojedel_procent", agg_func="sum", color="green"
+    df_hrana,
+    "pojedel_procent",
+    agg_func="sum",
+    rolling_window_days=rolling_window_days,
+    color="green",
 )
 figs["Pojedel (g)"] = get_scatterplot_with_trendline(
-    df_hrana, "pojedel_g", agg_func="sum", color="green"
+    df_hrana,
+    "pojedel_g",
+    agg_func="sum",
+    rolling_window_days=rolling_window_days,
+    color="green",
 )
+
 figs["Teža (g)"] = get_scatterplot_with_trendline(
-    data["log_teza"], "teza_g", agg_func="mean", color="orange"
+    data["log_teza"],
+    "teza_g",
+    resample=False,
+    rolling_window_days=rolling_window_days,
+    color="orange",
 )
 
 
@@ -237,12 +263,6 @@ figs["Cerenia (maropitant 16 mg tablete) [tablet]"] = get_plot_drugo(
 figs["Bruhanje"] = get_plot_drugo(
     data["log_drugo"], "bruhanje", kolicina=False, color="red"
 )
-figs["Driska"] = get_plot_drugo(
-    data["log_drugo"], "driska", kolicina=False, color="orange"
-)
-figs["Mehko kakanje"] = get_plot_drugo(
-    data["log_drugo"], "mehko kakanje", kolicina=False, color="orange"
-)
 figs["Infuzija (mL)"] = get_plot_drugo(
     data["log_drugo"], "infuzija s.c. (mL)", kolicina=True
 )
@@ -259,6 +279,22 @@ figs["Prevomax (mL)"] = get_plot_drugo(
 )
 figs["Mirataz"] = get_plot_drugo(data["log_drugo"], "mirataz (uho)", kolicina=False)
 
+df_kakanje = data["log_drugo"][
+    data["log_drugo"]["vrsta"].isin(
+        ["driska", "mehko kakanje", "kakanje dobro", "kakanje trdo"]
+    )
+].set_index("cas")
+df_kakanje["y"] = 1
+figs["Kakanje"] = px.bar(
+    df_kakanje,
+    x=df_kakanje.index,
+    y="y",
+    color="vrsta",
+    color_discrete_sequence=["orange", "red", "green", "blue"],
+    labels=dict(x="Datum", y="Kakanje"),
+)
+
+
 selected_subplots = st.multiselect(
     "Izbira grafov",
     figs.keys(),
@@ -267,6 +303,9 @@ selected_subplots = st.multiselect(
         "Pojedel (%)",
         "Teža (g)",
         "Leukeran (chlorambucil 2mg tablete) [tablet]",
+        "Prednicortone (5 mg tablete)",
+        "Kakanje",
+        "Bruhanje",
     ],
 )
 
