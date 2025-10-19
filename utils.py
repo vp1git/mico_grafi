@@ -7,6 +7,8 @@ SHEET_IDS = {
     "log_drugo": 1362862141,
     "vrste_hrana": 54176045,
     "vrste_drugo": 1556951560,
+    "kri": 1213954287,
+    "kri_stolpci": 944878481,
 }
 
 
@@ -29,13 +31,16 @@ def get_data() -> dict[pd.DataFrame]:
     log_drugo = get_df_from_google_sheets(SHEET_IDS["log_drugo"])[
         ["cas", "vrsta", "kolicina"]
     ]
-    for df in [log_hrana, log_teza, log_drugo]:
+    kri = get_df_from_google_sheets(SHEET_IDS["kri"])
+    for df in [log_hrana, log_teza, log_drugo, kri]:
         df["cas"] = pd.to_datetime(df["cas"], format="%Y-%m-%d %H:%M")
 
     vrste_hrana = get_df_from_google_sheets(SHEET_IDS["vrste_hrana"])[
         ["vrsta", "tip", "kcal_per_g"]
     ]
     vrste_drugo = get_df_from_google_sheets(SHEET_IDS["vrste_drugo"])[["vrsta", "tip"]]
+    kri_stolpci = get_df_from_google_sheets(SHEET_IDS["kri_stolpci"])
+
 
     return {
         "log_hrana": log_hrana,
@@ -43,4 +48,6 @@ def get_data() -> dict[pd.DataFrame]:
         "log_drugo": log_drugo,
         "vrste_hrana": vrste_hrana,
         "vrste_drugo": vrste_drugo,
+        "kri": kri,
+        "kri_stolpci": kri_stolpci,
     }
