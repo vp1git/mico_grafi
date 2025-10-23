@@ -37,6 +37,15 @@ df_hrana["pojedel_procent"] = df_hrana["pojedel_kcal"] / 225 * 100
 # with st.expander("Kumulativno procenti dnevnih kalorij", expanded=True):
 st.markdown("## Kumulativno procenti dnevnih kalorij")
 
+kumulativa_delta = st.checkbox("Normalizirano na predvidene kalorije", False)
+
+
+def get_predicted_kcal_at_time(t=datetime.time) -> float:
+    seconds = datetime.timedelta(
+        hours=t.hour, minutes=t.minute, seconds=t.second
+    ).total_seconds()
+    return seconds * 225.0 / (24 * 3600)
+
 
 def get_plot_kcal_kumulativa(df_hrana, date_start, date_end, current_datetime):
     kcal = df_hrana.set_index("cas")["pojedel_kcal"].loc[
@@ -71,11 +80,15 @@ def get_plot_kcal_kumulativa(df_hrana, date_start, date_end, current_datetime):
             ),
         ]
     ).sort_values(["dan", "ura"])
-
     df["ura"] = df["ura"].map(
         lambda t: datetime.datetime.combine(current_datetime.date(), t)
     )
     df["kcal_kumulativa"] = df.groupby("dan")["kcal"].cumsum()
+    if kumulativa_delta:
+        df["kcal_kumulativa"] = df.apply(
+            lambda row: row["kcal_kumulativa"] - get_predicted_kcal_at_time(row["ura"]),
+            axis="columns",
+        )
     df["kcal_kumulativa_procent"] = df["kcal_kumulativa"] / 225 * 100
 
     fig = px.line(
@@ -220,6 +233,11 @@ figs["Teža (g)"] = get_scatterplot_with_trendline(
     color="orange",
 )
 
+pojedel_kcal = df_hrana[df_hrana["cas"] > "2025-07-17"].set_index("cas")["pojedel_kcal"]
+pojedel_delta = pojedel_kcal.resample("1h").sum() - (225 / 24)
+
+figs["Kumulativna bilanca pojedel [kcal]"] = px.line(pojedel_delta.cumsum())
+
 
 def get_plot_drugo(df, vrsta, kolicina=False, color="blue"):
     s = df[df.vrsta.isin([vrsta])].set_index("cas")
@@ -333,7 +351,7 @@ fig_out.update_xaxes(
 )
 fig_out.update_layout({"barmode": "stack"})
 fig_out.update_layout(height=700, width=600)
-fig_out.update_layout(legend=dict(orientation="h", yanchor="bottom", y=-0.6))
+# fig_out.update_layout(legend=dict(orientation="h", yanchor="bottom", y=-0.6))
 
 st.plotly_chart(fig_out)
 

@@ -20,11 +20,31 @@ df_hrana["pojedel_kcal"] = df_hrana.apply(
 #
 #
 # %%
+pojedel_kcal = df_hrana[df_hrana["cas"] > "2025-07-17"].set_index("cas")["pojedel_kcal"]
+pojedel_delta = pojedel_kcal.resample("1h").sum() - (225 / 24)
+
+df_drugo = data["log_drugo"]
+leukeran_datumi = df_drugo["cas"][df_drugo["vrsta"].str.contains("Leukeran")].dt.date
+
+fig = px.line(pojedel_delta.cumsum())
+
+for i in leukeran_datumi:
+    fig.add_vline(i, line_width=0.5, opacity=0.7)
+
+fig.add_vline("2025-09-08", line_dash="dot", line_width=0.5, opacity=0.7)
+fig.add_vline("2025-08-14", line_dash="dash", line_width=0.5, opacity=0.7)
+fig.add_vline("2025-10-02", line_dash="dash", line_width=0.5, opacity=0.7)
+# fig.update_xaxes(rangeslider_visible=True)
+fig
+# %%
+
+# %%
 #
-data['log_drugo']
+data["log_drugo"]
 #
 #
 #
+
 
 # %%
 def plot_hrana_sam_sonda(df_hrana, procent=True):
@@ -209,6 +229,7 @@ df
 #
 #
 # %%
+pojedel_kcal = df_hrana["pojedel_kcal"]
 px.scatter(
     x=pojedel_kcal.reindex(date_range).interpolate(),
     y=teza.reindex(date_range).interpolate(),
