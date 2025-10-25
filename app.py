@@ -296,6 +296,9 @@ figs["Prevomax (mL)"] = get_plot_drugo(
     data["log_drugo"], "Prevomax (maropitant 10 mg/mL) [mL]", kolicina=True
 )
 figs["Mirataz"] = get_plot_drugo(data["log_drugo"], "mirataz (uho)", kolicina=False)
+figs["Erycitol (B12) (1mg/mL) [mL]"] = get_plot_drugo(
+    data["log_drugo"], "Erycitol (B12) (1mg/mL) [mL]", kolicina=True
+)
 
 df_kakanje = data["log_drugo"][
     data["log_drugo"]["vrsta"].isin(
