@@ -85,6 +85,11 @@ def get_plot_kcal_kumulativa(df_hrana, date_start, date_end, current_datetime):
     )
     df["kcal_kumulativa"] = df.groupby("dan")["kcal"].cumsum()
     if kumulativa_delta:
+        df_lag = df.copy()
+        df_lag["kcal_kumulativa"] = df_lag["kcal_kumulativa"].shift(1)
+        df_lag = df_lag[1:]
+        df_lag = df_lag[df_lag["ura"].dt.time != datetime.time(0, 0)]
+        df = pd.concat([df, df_lag]).sort_values(["dan", "ura", "kcal_kumulativa"])
         df["kcal_kumulativa"] = df.apply(
             lambda row: row["kcal_kumulativa"] - get_predicted_kcal_at_time(row["ura"]),
             axis="columns",
@@ -96,7 +101,7 @@ def get_plot_kcal_kumulativa(df_hrana, date_start, date_end, current_datetime):
         x="ura",
         y="kcal_kumulativa_procent",
         color="dan",
-        line_shape="hv",
+        line_shape="hv" if not kumulativa_delta else "linear",
         markers=True,
     )
 
